@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>リマインド コマンド生成ツール</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 680px;
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #111;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="number"], input[type="time"], input[type="datetime-local"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .textarea-wrapper {
+            position: relative;
+        }
+        textarea {
+            resize: vertical;
+            height: 130px;
+            font-family: inherit;
+            padding-right: 45px;
+        }
+        .emoji-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 15px;
+            background: #f1f3f5;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emoji-btn:hover {
+            background: #e2e6ea;
+        }
+        .emoji-popup {
+            display: none;
+            position: absolute;
+            right: 10px;
+            bottom: 55px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 10px;
+            width: 260px;
+            z-index: 100;
+        }
+        .emoji-popup.active {
+            display: block;
+        }
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .emoji-item {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .emoji-item:hover {
+            background: #f1f3f5;
+        }
+        .row {
+            display: flex;
+            gap: 16px;
+        }
+        .col {
+            flex: 1;
+        }
+        .tab-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            background: #f1f3f5;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: center;
+        }
+        .tab-btn.active {
+            background: #1668dc;
+            color: #fff;
+            border-color: #1668dc;
+            font-weight: bold;
+        }
+        .time-panel {
+            display: none;
+        }
+        .time-panel.active {
+            display: block;
+        }
+        .sub-options {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .output-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #333;
+            padding: 14px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            background-color: #1668dc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            width: 100%;
+        }
+        .copy-btn:hover {
+            background-color: #115293;
+        }
+        .copied-msg {
+            color: #2e7d32;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 8px;
+            display: none;
+        }
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>リマインド コマンド生成</h2>
+    
+    <div class="row">
+        <div class="col form-group">
+            <label for="targetType">宛先</label>
+            <select id="targetType" onchange="handleTargetChange()">
+                <option value="me">自分宛て (me)</option>
+                <option value="channel">チャンネル指定</option>
+            </select>
+        </div>
+        <div class="col form-group" id="channelGroup" style="display:none;">
+            <label for="channelName">チャンネルハンドル名</label>
+            <input type="text" id="channelName" placeholder="例: team-general" oninput="updateCommand()">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>通知時間の設定方法</label>
+        <div class="tab-group">
+            <button type="button" class="tab-btn active" onclick="switchTab('quick')">簡易（分・時間後・今日明日）</button>
+            <button type="button" class="tab-btn" onclick="switchTab('calendar')">カレンダー・日時</button>
+            <button type="button" class="tab-btn" onclick="switchTab('repeat')">定期・繰り返し</button>
+        </div>
+
+        <div id="panel-quick" class="time-panel active">
+            <div class="row">
+                <div class="col">
+                    <select id="quickMode" onchange="toggleQuickSubOptions()">
+                        <option value="in_mins">〇分後</option>
+                        <option value="in_hours">〇時間後</option>
+                        <option value="today_at">今日の特定時間 (at)</option>
+                        <option value="tomorrow_at">明日の特定時間 (at)</option>
+                        <option value="tomorrow_only">明日（そのまま）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sub-options">
+                <div id="quickNumBox">
+                    <label for="quickValue" id="quickValueLabel" style="font-size: 13px; margin-bottom: 4px;">何分後:</label>
+                    <input type="number" id="quickValue" value="10" min="1" oninput="updateCommand()">
+                </div>
+                <div id="quickTimeBox" style="display:none;">
+                    <label for="quickTimeVal" style="font-size: 13px; margin-bottom: 4px;">時間を選択:</label>
+                    <input type="time" id="quickTimeVal" value="15:00" onchange="updateCommand()">
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-calendar" class="time-panel">
+            <input type="datetime-local" id="calendarInput" onchange="updateCommand()">
+            <div class="hint">※カレンダーから日付と時間を選択できます</div>
+        </div>
+
+        <!-- 定期パネル（毎月オプション追加） -->
+        <div id="panel-repeat" class="time-panel">
+            <div class="row">
+                <div class="col">
+                    <select id="repeatCycle" onchange="toggleRepeatSubOptions()">
+                        <option value="every day">毎日</option>
+                        <option value="every weekday">平日の毎日</option>
+                        <option value="every Monday">毎週 月曜日</option>
+                        <option value="every Tuesday">毎週 火曜日</option>
+                        <option value="every Wednesday">毎週 水曜日</option>
+                        <option value="every Thursday">毎週 木曜日</option>
+                        <option value="every Friday">毎週 金曜日</option>
+                        <option value="every_month_day">毎月〇日</option>
+                        <option value="every_month_nth">毎月第〇曜日</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sub-options">
+                <!-- 毎月〇日の設定 -->
+                <div id="repeatMonthDayBox" style="display:none; margin-bottom: 8px;">
+                    <label style="font-size: 13px; margin-bottom: 4px;">何日を指定:</label>
+                    <select id="repeatMonthDayVal" onchange="updateCommand()">
+                        <option value="1st">1日</option>
+                        <option value="10th">10日</option>
+                        <option value="15th">15日</option>
+                        <option value="20th">20日</option>
+                        <option value="25th">25日</option>
+                        <option value="last day">最終日</option>
+                    </select>
+                </div>
+                <!-- 毎月第〇曜日の設定 -->
+                <div id="repeatMonthNthBox" style="display:none; margin-bottom: 8px;">
+                    <div class="row">
+                        <div class="col">
+                            <label style="font-size: 13px; margin-bottom: 4px;">第幾つ:</label>
+                            <select id="repeatMonthNthWeek" onchange="updateCommand()">
+                                <option value="1st">第1</option>
+                                <option value="2nd">第2</option>
+                                <option value="3rd">第3</option>
+                                <option value="4th">第4</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label style="font-size: 13px; margin-bottom: 4px;">曜日:</label>
+                            <select id="repeatMonthNthDay" onchange="updateCommand()">
+                                <option value="Monday">月曜日</option>
+                                <option value="Tuesday">火曜日</option>
+                                <option value="Wednesday">水曜日</option>
+                                <option value="Thursday">木曜日</option>
+                                <option value="Friday">金曜日</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- 時間選択 -->
+                <div>
+                    <label for="repeatTime" style="font-size: 13px; margin-bottom: 4px;">実行時間を選択:</label>
+                    <input type="time" id="repeatTime" value="09:00" onchange="updateCommand()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="remindMessage">通知テキスト（Markdown・絵文字・改行対応）</label>
+        <div class="textarea-wrapper">
+            <textarea id="remindMessage" placeholder="例: **9月フェア開始** :tada:&#10;詳細を確認してください！" oninput="updateCommand()"></textarea>
+            <button type="button" id="emojiButton" class="emoji-btn" title="絵文字を選択" onclick="toggleEmojiPopup(event)">😀</button>
+            
+            <div id="emojiPopup" class="emoji-popup">
+                <div class="emoji-grid" id="emojiGrid"></div>
+            </div>
+        </div>
+        <div class="hint">※ 右下の 😀 ボタンから絵文字を選んで挿入できます。</div>
+    </div>
+
+    <div class="form-group">
+        <label>生成されたコマンド（Mattermost用）</label>
+        <div id="output" class="output-box">/remind me "" in 10 minutes</div>
+        <button class="copy-btn" onclick="copyCommand()">ワンクリックでコマンドをコピー</button>
+        <div id="copiedText" class="copied-msg">クリップボードにコピーしました！</div>
+    </div>
+</div>
+
+<script>
+    let currentTab = 'quick';
+
+    const emojis = [
+        "😀", "😁", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌",
+        "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪",
+        "😎", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁",
+        "👍", "👎", "👏", "🙌", "👐", "🤝", "🙏", "✌️", "🤞", "🤟",
+        "🔥", "✨", "⭐", "🌟", "💬", "📢", "📣", "🔔", "⏰", "⏳",
+        "✅", "❌", "💯", "❗", "❓", "💡", "📌", "📎", "📁", "📂"
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const grid = document.getElementById('emojiGrid');
+        emojis.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'emoji-item';
+            btn.textContent = emoji;
+            btn.onclick = () => insertEmoji(emoji);
+            grid.appendChild(btn);
+        });
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.querySelector('.textarea-wrapper');
+            if (!wrapper.contains(e.target)) {
+                document.getElementById('emojiPopup').classList.remove('active');
+            }
+        });
+
+        toggleQuickSubOptions();
+        toggleRepeatSubOptions();
+        updateCommand();
+    });
+
+    function toggleEmojiPopup(e) {
+        e.stopPropagation();
+        const popup = document.getElementById('emojiPopup');
+        popup.classList.toggle('active');
+    }
+
+    function insertEmoji(emoji) {
+        const textarea = document.getElementById('remindMessage');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+
+        textarea.value = text.substring(0, start) + emoji + text.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+        textarea.focus();
+        
+        document.getElementById('emojiPopup').classList.remove('active');
+        updateCommand();
+    }
+
+    function switchTab(tabName) {
+        currentTab = tabName;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.time-panel').forEach(panel => panel.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById('panel-' + tabName).classList.add('active');
+        updateCommand();
+    }
+
+    function handleTargetChange() {
+        const targetType = document.getElementById('targetType').value;
+        const channelGroup = document.getElementById('channelGroup');
+        channelGroup.style.display = (targetType === 'channel') ? 'block' : 'none';
+        updateCommand();
+    }
+
+    function toggleQuickSubOptions() {
+        const mode = document.getElementById('quickMode').value;
+        const numBox = document.getElementById('quickNumBox');
+        const timeBox = document.getElementById('quickTimeBox');
+        const label = document.getElementById('quickValueLabel');
+
+        if (mode === 'in_mins') {
+            numBox.style.display = 'block';
+            timeBox.style.display = 'none';
+            label.textContent = '何分後:';
+        } else if (mode === 'in_hours') {
+            numBox.style.display = 'block';
+            timeBox.style.display = 'none';
+            label.textContent = '何時間後:';
+        } else if (mode === 'today_at' || mode === 'tomorrow_at') {
+            numBox.style.display = 'none';
+            timeBox.style.display = 'block';
+        } else {
+            numBox.style.display = 'none';
+            timeBox.style.display = 'none';
+        }
+        updateCommand();
+    }
+
+    function toggleRepeatSubOptions() {
+        const cycle = document.getElementById('repeatCycle').value;
+        const monthDayBox = document.getElementById('repeatMonthDayBox');
+        const monthNthBox = document.getElementById('repeatMonthNthBox');
+
+        monthDayBox.style.display = (cycle === 'every_month_day') ? 'block' : 'none';
+        monthNthBox.style.display = (cycle === 'every_month_nth') ? 'block' : 'none';
+
+        updateCommand();
+    }
+
+    function formatTime12h(time24h) {
+        if (!time24h) return '9:00am';
+        const parts = time24h.split(':');
+        let hours = parseInt(parts[0], 10);
+        const minutes = parts[1];
+        const ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${hours}:${minutes}${ampm}`;
+    }
+
+    function updateCommand() {
+        const targetType = document.getElementById('targetType').value;
+        const channelName = document.getElementById('channelName').value.trim();
+        let timeStr = 'in 10 minutes';
+
+        if (currentTab === 'quick') {
+            const mode = document.getElementById('quickMode').value;
+            const val = document.getElementById('quickValue').value || 1;
+            const timeVal = document.getElementById('quickTimeVal').value;
+            const formattedTime = formatTime12h(timeVal);
+
+            if (mode === 'in_mins') {
+                timeStr = val == 1 ? 'in 1 minute' : `in ${val} minutes`;
+            } else if (mode === 'in_hours') {
+                timeStr = val == 1 ? 'in 1 hour' : `in ${val} hours`;
+            } else if (mode === 'today_at') {
+                timeStr = `at ${formattedTime} today`;
+            } else if (mode === 'tomorrow_at') {
+                timeStr = `at ${formattedTime} tomorrow`;
+            } else if (mode === 'tomorrow_only') {
+                timeStr = 'tomorrow';
+            }
+        } else if (currentTab === 'calendar') {
+            const val = document.getElementById('calendarInput').value;
+            if (val) {
+                const [datePart, timePart] = val.split('T');
+                timeStr = `at ${timePart} ${datePart}`;
+            } else {
+                timeStr = 'at 15:45 2026-09-04';
+            }
+        } else if (currentTab === 'repeat') {
+            const cycle = document.getElementById('repeatCycle').value;
+            const rawTime = document.getElementById('repeatTime').value;
+            const formattedTime = formatTime12h(rawTime);
+
+            if (cycle === 'every_month_day') {
+                const dayVal = document.getElementById('repeatMonthDayVal').value;
+                timeStr = `every ${dayVal} of the month at ${formattedTime}`;
+            } else if (cycle === 'every_month_nth') {
+                const weekVal = document.getElementById('repeatMonthNthWeek').value;
+                const dayOfWeek = document.getElementById('repeatMonthNthDay').value;
+                timeStr = `every ${weekVal} ${dayOfWeek} of the month at ${formattedTime}`;
+            } else {
+                timeStr = `${cycle} at ${formattedTime}`;
+            }
+        }
+
+        const message = document.getElementById('remindMessage').value;
+        let targetStr = (targetType === 'channel') ? (channelName ? '~' + channelName : '~チャンネル名') : 'me';
+        
+        const formattedMessage = `"${message.replace(/"/g, '\\"')}"`;
+        const command = `/remind ${targetStr} ${formattedMessage} ${timeStr}`;
+
+        document.getElementById('output').textContent = command;
+    }
+
+    function copyCommand() {
+        const outputText = document.getElementById('output').textContent;
+        navigator.clipboard.writeText(outputText).then(() => {
+            const copied = document.getElementById('copiedText');
+            copied.style.display = 'block';
+            setTimeout(() => {
+                copied.style.display = 'none';
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
