@@ -494,11 +494,11 @@
 
             if (cycle === 'every_month_day') {
                 const dayVal = document.getElementById('repeatMonthDayVal').value;
-                timeStr = `every ${dayVal} of the month at ${formattedTime}`;
+                timeStr = `every ${dayVal} at ${formattedTime}`;
             } else if (cycle === 'every_month_nth') {
                 const weekVal = document.getElementById('repeatMonthNthWeek').value;
                 const dayOfWeek = document.getElementById('repeatMonthNthDay').value;
-                timeStr = `every ${weekVal} ${dayOfWeek} of the month at ${formattedTime}`;
+                timeStr = `every ${weekVal} ${dayOfWeek} at ${formattedTime}`;
             } else {
                 timeStr = `${cycle} at ${formattedTime}`;
             }
