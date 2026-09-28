@@ -199,8 +199,16 @@
             <label for="targetType">宛先</label>
             <select id="targetType" onchange="handleTargetChange()">
                 <option value="me">自分宛て (me)</option>
-                <option value="channel">チャンネル指定</option>
+                <option value="user">特定ユーザー宛て (@username)</option>
+                <option value="all">@all（全員）</option>
+                <option value="here">@here（オンラインメンバー）</option>
+                <option value="channel_mention">@channel（チャンネル全員）</option>
+                <option value="channel">チャンネル指定 (~channel)</option>
             </select>
+        </div>
+        <div class="col form-group" id="userGroup" style="display:none;">
+            <label for="userName">ユーザー名</label>
+            <input type="text" id="userName" placeholder="例: tanaka.taro" oninput="updateCommand()">
         </div>
         <div class="col form-group" id="channelGroup" style="display:none;">
             <label for="channelName">チャンネルハンドル名</label>
@@ -397,7 +405,9 @@
     function handleTargetChange() {
         const targetType = document.getElementById('targetType').value;
         const channelGroup = document.getElementById('channelGroup');
+        const userGroup = document.getElementById('userGroup');
         channelGroup.style.display = (targetType === 'channel') ? 'block' : 'none';
+        userGroup.style.display = (targetType === 'user') ? 'block' : 'none';
         updateCommand();
     }
 
@@ -495,7 +505,30 @@
         }
 
         const message = document.getElementById('remindMessage').value;
-        let targetStr = (targetType === 'channel') ? (channelName ? '~' + channelName : '~チャンネル名') : 'me';
+        const userName = document.getElementById('userName').value.trim();
+        let targetStr;
+        switch (targetType) {
+            case 'me':
+                targetStr = 'me';
+                break;
+            case 'user':
+                targetStr = userName ? '@' + userName : '@ユーザー名';
+                break;
+            case 'all':
+                targetStr = '@all';
+                break;
+            case 'here':
+                targetStr = '@here';
+                break;
+            case 'channel_mention':
+                targetStr = '@channel';
+                break;
+            case 'channel':
+                targetStr = channelName ? '~' + channelName : '~チャンネル名';
+                break;
+            default:
+                targetStr = 'me';
+        }
         
         const formattedMessage = `"${message.replace(/"/g, '\\"')}"`;
         const command = `/remind ${targetStr} ${formattedMessage} ${timeStr}`;
