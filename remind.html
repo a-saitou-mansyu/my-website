@@ -253,7 +253,7 @@
             <div class="hint">※カレンダーから日付と時間を選択できます</div>
         </div>
 
-        <!-- 定期パネル（毎月オプション追加） -->
+        <!-- 定期パネル -->
         <div id="panel-repeat" class="time-panel">
             <div class="row">
                 <div class="col">
@@ -266,7 +266,6 @@
                         <option value="every Thursday">毎週 木曜日</option>
                         <option value="every Friday">毎週 金曜日</option>
                         <option value="every_month_day">毎月〇日</option>
-                        <option value="every_month_nth">毎月第〇曜日</option>
                     </select>
                 </div>
             </div>
@@ -280,32 +279,8 @@
                         <option value="15th">15日</option>
                         <option value="20th">20日</option>
                         <option value="25th">25日</option>
-                        <option value="last day">最終日</option>
+                        <option value="30th">30日</option>
                     </select>
-                </div>
-                <!-- 毎月第〇曜日の設定 -->
-                <div id="repeatMonthNthBox" style="display:none; margin-bottom: 8px;">
-                    <div class="row">
-                        <div class="col">
-                            <label style="font-size: 13px; margin-bottom: 4px;">第幾つ:</label>
-                            <select id="repeatMonthNthWeek" onchange="updateCommand()">
-                                <option value="1st">第1</option>
-                                <option value="2nd">第2</option>
-                                <option value="3rd">第3</option>
-                                <option value="4th">第4</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label style="font-size: 13px; margin-bottom: 4px;">曜日:</label>
-                            <select id="repeatMonthNthDay" onchange="updateCommand()">
-                                <option value="Monday">月曜日</option>
-                                <option value="Tuesday">火曜日</option>
-                                <option value="Wednesday">水曜日</option>
-                                <option value="Thursday">木曜日</option>
-                                <option value="Friday">金曜日</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
                 <!-- 時間選択 -->
                 <div>
@@ -438,10 +413,8 @@
     function toggleRepeatSubOptions() {
         const cycle = document.getElementById('repeatCycle').value;
         const monthDayBox = document.getElementById('repeatMonthDayBox');
-        const monthNthBox = document.getElementById('repeatMonthNthBox');
 
         monthDayBox.style.display = (cycle === 'every_month_day') ? 'block' : 'none';
-        monthNthBox.style.display = (cycle === 'every_month_nth') ? 'block' : 'none';
 
         updateCommand();
     }
@@ -495,10 +468,6 @@
             if (cycle === 'every_month_day') {
                 const dayVal = document.getElementById('repeatMonthDayVal').value;
                 timeStr = `every ${dayVal} at ${formattedTime}`;
-            } else if (cycle === 'every_month_nth') {
-                const weekVal = document.getElementById('repeatMonthNthWeek').value;
-                const dayOfWeek = document.getElementById('repeatMonthNthDay').value;
-                timeStr = `every ${weekVal} ${dayOfWeek} at ${formattedTime}`;
             } else {
                 timeStr = `${cycle} at ${formattedTime}`;
             }
