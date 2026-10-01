@@ -200,10 +200,10 @@
             <select id="targetType" onchange="handleTargetChange()">
                 <option value="me">自分宛て (me)</option>
                 <option value="user">特定ユーザー宛て (@username)</option>
-                <option value="all">@all（全員）</option>
-                <option value="here">@here（オンラインメンバー）</option>
-                <option value="channel_mention">@channel（チャンネル全員）</option>
                 <option value="channel">チャンネル指定 (~channel)</option>
+                <option value="channel_all">チャンネル指定 + @all</option>
+                <option value="channel_here">チャンネル指定 + @here</option>
+                <option value="channel_channel">チャンネル指定 + @channel</option>
             </select>
         </div>
         <div class="col form-group" id="userGroup" style="display:none;">
@@ -212,7 +212,7 @@
         </div>
         <div class="col form-group" id="channelGroup" style="display:none;">
             <label for="channelName">チャンネルハンドル名</label>
-            <input type="text" id="channelName" placeholder="例: team-general" oninput="updateCommand()">
+            <input type="text" id="channelName" value="f72265003ff4abd998f9c89d6573e49f" placeholder="例: team-general" oninput="updateCommand()">
         </div>
     </div>
 
@@ -381,7 +381,8 @@
         const targetType = document.getElementById('targetType').value;
         const channelGroup = document.getElementById('channelGroup');
         const userGroup = document.getElementById('userGroup');
-        channelGroup.style.display = (targetType === 'channel') ? 'block' : 'none';
+        const isChannel = targetType.startsWith('channel');
+        channelGroup.style.display = isChannel ? 'block' : 'none';
         userGroup.style.display = (targetType === 'user') ? 'block' : 'none';
         updateCommand();
     }
@@ -473,9 +474,11 @@
             }
         }
 
-        const message = document.getElementById('remindMessage').value;
+        const rawMessage = document.getElementById('remindMessage').value;
         const userName = document.getElementById('userName').value.trim();
         let targetStr;
+        let prefixMention = '';
+
         switch (targetType) {
             case 'me':
                 targetStr = 'me';
@@ -483,23 +486,27 @@
             case 'user':
                 targetStr = userName ? '@' + userName : '@ユーザー名';
                 break;
-            case 'all':
-                targetStr = '@all';
-                break;
-            case 'here':
-                targetStr = '@here';
-                break;
-            case 'channel_mention':
-                targetStr = '@channel';
-                break;
             case 'channel':
                 targetStr = channelName ? '~' + channelName : '~チャンネル名';
+                break;
+            case 'channel_all':
+                targetStr = channelName ? '~' + channelName : '~チャンネル名';
+                prefixMention = '@all ';
+                break;
+            case 'channel_here':
+                targetStr = channelName ? '~' + channelName : '~チャンネル名';
+                prefixMention = '@here ';
+                break;
+            case 'channel_channel':
+                targetStr = channelName ? '~' + channelName : '~チャンネル名';
+                prefixMention = '@channel ';
                 break;
             default:
                 targetStr = 'me';
         }
         
-        const formattedMessage = `"${message.replace(/"/g, '\\"')}"`;
+        const fullMessage = prefixMention + rawMessage;
+        const formattedMessage = `"${fullMessage.replace(/"/g, '\\"')}"`;
         const command = `/remind ${targetStr} ${formattedMessage} ${timeStr}`;
 
         document.getElementById('output').textContent = command;
