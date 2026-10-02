@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>info.json お知らせ生成ツール</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-sub: #64748b;
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 24px 16px;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            padding: 28px 24px;
+        }
+
+        .header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-top: 4px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .required {
+            color: #ef4444;
+            margin-left: 4px;
+        }
+
+        .help-text {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-top: 4px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text);
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .quick-dates {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .quick-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+
+
+        .output-section {
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .output-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .copy-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .copy-btn.copied {
+            background-color: #16a34a;
+        }
+
+        pre {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 14px 16px;
+            border-radius: 6px;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>お知らせJSON テキスト生成ツール</h1>
+        <p>項目を入力すると、<code>info.json</code> にそのままコピペできる形式のテキストがリアルタイムで作成されます。</p>
+    </div>
+
+    <form id="infoForm" onsubmit="return false;">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id">id (連番)<span class="required">*</span></label>
+                <input type="number" id="id" value="80" placeholder="例: 80" required>
+                <div class="help-text">前のお知らせの続きの番号を入力</div>
+            </div>
+
+            <div class="form-group">
+                <label for="shop_id">shop_id (店番号)<span class="required">*</span></label>
+                <input type="number" id="shop_id" placeholder="例: 108" required>
+            </div>
+
+            <div class="form-group full">
+                <label for="text">お知らせ内容 (text)<span class="required">*</span></label>
+                <textarea id="text" placeholder="例: 8/1 新装オープン！"></textarea>
+            </div>
+
+            <div class="form-group full">
+                <label for="url">URL (任意)</label>
+                <input type="text" id="url" placeholder="https://www.example.com/ (なければ空欄)">
+            </div>
+
+            <div class="form-group full">
+                <label for="post_date">投稿日 (post_date)<span class="required">*</span></label>
+                <input type="date" id="post_date">
+                <div class="quick-dates">
+                    <button type="button" class="quick-btn" onclick="setPostToday()">今日に設定</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="start_date">開始日 (start_date)<span class="required">*</span></label>
+                <input type="date" id="start_date">
+                <div class="quick-dates">
+                    <button type="button" class="quick-btn" onclick="syncStartDateToPost()">投稿日と同じ</button>
+                    <button type="button" class="quick-btn" onclick="setStartToday()">今日に設定</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="end_date">終了日 (end_date)<span class="required">*</span></label>
+                <input type="date" id="end_date">
+                <div class="quick-dates">
+                    <button type="button" class="quick-btn" onclick="setEndAfterDays(1)">翌日</button>
+                    <button type="button" class="quick-btn" onclick="setEndAfterMonths(1)">1ヶ月後</button>
+                    <button type="button" class="quick-btn" onclick="setEndAfterMonths(12)">1年後</button>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="output-section">
+            <div class="output-header">
+                <div class="output-title">生成テキスト (info.json 用)</div>
+                <button type="button" id="copyBtn" class="copy-btn" onclick="copyToClipboard()">
+                    <span>コピーする</span>
+                </button>
+            </div>
+            <pre><code id="jsonOutput"></code></pre>
+        </div>
+    </form>
+
+    <a href="./index.html" class="back-link">&larr; トップに戻る</a>
+</div>
+
+<script>
+    function formatDateToISO(dateString) {
+        if (!dateString) return "";
+        // 日付 (YYYY-MM-DD) を日本時間0時 (前日15:00:00.000Z) のISO文字列に変換
+        // info.jsonのフォーマット例: 2025-07-14T15:00:00.000Z
+        const parts = dateString.split('-');
+        if (parts.length !== 3) return "";
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+
+        // 日本時間 00:00:00 は UTCで前日 15:00:00
+        const d = new Date(Date.UTC(year, month, day, 0, 0, 0));
+        // 日本時間は UTC+9 なので 9時間を引く
+        d.setUTCHours(d.getUTCHours() - 9);
+        return d.toISOString();
+    }
+
+    function getTodayString() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function setPostToday() {
+        document.getElementById('post_date').value = getTodayString();
+        updateOutput();
+    }
+
+    function setStartToday() {
+        document.getElementById('start_date').value = getTodayString();
+        updateOutput();
+    }
+
+    function syncStartDateToPost() {
+        document.getElementById('start_date').value = document.getElementById('post_date').value;
+        updateOutput();
+    }
+
+    function setEndAfterDays(days) {
+        const base = document.getElementById('start_date').value || document.getElementById('post_date').value || getTodayString();
+        const d = new Date(base);
+        d.setDate(d.getDate() + days);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        document.getElementById('end_date').value = `${y}-${m}-${day}`;
+        updateOutput();
+    }
+
+    function setEndAfterMonths(months) {
+        const base = document.getElementById('start_date').value || document.getElementById('post_date').value || getTodayString();
+        const d = new Date(base);
+        d.setMonth(d.getMonth() + months);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        document.getElementById('end_date').value = `${y}-${m}-${day}`;
+        updateOutput();
+    }
+
+    function updateOutput() {
+        const idVal = parseInt(document.getElementById('id').value, 10);
+        const shopIdVal = parseInt(document.getElementById('shop_id').value, 10);
+        const textVal = document.getElementById('text').value;
+        const urlVal = document.getElementById('url').value;
+        const postDateVal = document.getElementById('post_date').value;
+        const startDateVal = document.getElementById('start_date').value;
+        const endDateVal = document.getElementById('end_date').value;
+
+        // info.jsonのスタイルに合わせてインデント（半角スペース2つ）とLF改行コードでフォーマット
+        const lines = [
+            '  , {',
+            `    "id": ${isNaN(idVal) ? 0 : idVal},`,
+            `    "shop_id": ${isNaN(shopIdVal) ? 0 : shopIdVal},`,
+            `    "text": ${JSON.stringify(textVal)},`,
+            `    "url": ${JSON.stringify(urlVal)},`,
+            `    "post_date": ${JSON.stringify(formatDateToISO(postDateVal))},`,
+            `    "start_date": ${JSON.stringify(formatDateToISO(startDateVal))},`,
+            `    "end_date": ${JSON.stringify(formatDateToISO(endDateVal))},`,
+            '    "is_show": 1',
+            '  }'
+        ];
+
+        // 頭にカンマをつけて末尾にそのまま追記できる形式（LF改行）
+        // 例: ,\n  {\n...
+        // 既存の最後の閉じ括弧 } の次の行に貼り付けられるよう「,\n  {」形式
+        const blockLines = [
+            `,\n  {`,
+            `    "id": ${isNaN(idVal) ? 0 : idVal},`,
+            `    "shop_id": ${isNaN(shopIdVal) ? 0 : shopIdVal},`,
+            `    "text": ${JSON.stringify(textVal)},`,
+            `    "url": ${JSON.stringify(urlVal)},`,
+            `    "post_date": ${JSON.stringify(formatDateToISO(postDateVal))},`,
+            `    "start_date": ${JSON.stringify(formatDateToISO(startDateVal))},`,
+            `    "end_date": ${JSON.stringify(formatDateToISO(endDateVal))},`,
+            '    "is_show": 1',
+            '  }'
+        ];
+        const result = blockLines.join('\n');
+        document.getElementById('jsonOutput').textContent = result;
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('jsonOutput').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('copyBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span>コピー完了！</span>';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('copied');
+            }, 1800);
+        }).catch(err => {
+            alert('コピーに失敗しました: ' + err);
+        });
+    }
+
+    // 初期値セット
+    window.addEventListener('DOMContentLoaded', () => {
+        const today = getTodayString();
+        document.getElementById('post_date').value = today;
+        document.getElementById('start_date').value = today;
+        document.getElementById('id').value = 80;
+
+        // 終了日のデフォルト: 1ヶ月後
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        document.getElementById('end_date').value = `${y}-${m}-${day}`;
+
+        // info.json がある場合は最後のIDを推測して初期値にする（なければデフォルト80）
+        fetch('./info.json')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    const lastItem = data[data.length - 1];
+                    if (lastItem && typeof lastItem.id === 'number') {
+                        document.getElementById('id').value = lastItem.id + 1;
+                    }
+                }
+                updateOutput();
+            })
+            .catch(() => {
+                // fetch失敗時（カンマ抜け構文エラー等）も確実に80を維持
+                document.getElementById('id').value = 80;
+                updateOutput();
+            });
+
+        const inputs = document.querySelectorAll('#infoForm input, #infoForm textarea');
+        inputs.forEach(input => {
+            input.addEventListener('input', updateOutput);
+        });
+
+        updateOutput();
+    });
+</script>
+
+</body>
+</html>

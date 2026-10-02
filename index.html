@@ -2,10 +2,223 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>マイサイト</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社内・運用ツールポータル</title>
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        .portal-container {
+            width: 100%;
+            max-width: 580px;
+        }
+
+        .portal-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .portal-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        .portal-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+
+        .portal-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .tool-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .tool-card {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+            border-color: #cbd5e1;
+        }
+
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+
+        .tool-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 16px;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover .tool-icon {
+            transform: scale(1.08);
+        }
+
+        .icon-info {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .icon-remind {
+            background: #fdf2f8;
+            color: #db2777;
+        }
+
+        .tool-info {
+            flex-grow: 1;
+        }
+
+        .tool-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .tool-arrow {
+            color: #94a3b8;
+            font-size: 18px;
+            margin-left: 12px;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .tool-card:hover .tool-arrow {
+            transform: translateX(4px);
+            color: var(--primary);
+        }
+
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
 </head>
 <body>
-    <h1>ツールのテストページ</h1>
-    <p><a href="./remind.html">remind</a></p>
+
+<div class="portal-container">
+    <div class="portal-header">
+        <span class="portal-badge">TOOLS PORTAL</span>
+        <h1>運用サポートツール</h1>
+        <p>日常の更新・通知作成作業を支援するツール一覧です</p>
+    </div>
+
+    <div class="tool-list">
+        <a href="./info-generator.html" class="tool-card">
+            <div class="tool-icon icon-info">📢</div>
+            <div class="tool-info">
+                <div class="tool-title">
+                    お知らせJSON 生成ツール
+                </div>
+                <div class="tool-desc">
+                    各項目を入力して info.json へそのまま貼り付け可能なテキストを作成・コピーします。
+                </div>
+            </div>
+            <div class="tool-arrow">&rarr;</div>
+        </a>
+
+        <a href="./remind.html" class="tool-card">
+            <div class="tool-icon icon-remind">⏰</div>
+            <div class="tool-info">
+                <div class="tool-title">
+                    リマインド コマンド生成ツール
+                </div>
+                <div class="tool-desc">
+                    日時やメッセージ、宛先等を設定してリマインダー用コマンドを作成します。
+                </div>
+            </div>
+            <div class="tool-arrow">&rarr;</div>
+        </a>
+    </div>
+
+    <div class="footer">
+        &copy; 運営・管理用ポータル
+    </div>
+</div>
+
 </body>
 </html>
