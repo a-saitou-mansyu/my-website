@@ -381,9 +381,25 @@
         const targetType = document.getElementById('targetType').value;
         const channelGroup = document.getElementById('channelGroup');
         const userGroup = document.getElementById('userGroup');
+        const textarea = document.getElementById('remindMessage');
         const isChannel = targetType.startsWith('channel');
         channelGroup.style.display = isChannel ? 'block' : 'none';
         userGroup.style.display = (targetType === 'user') ? 'block' : 'none';
+
+        // メンション種別の判定
+        let mentionToAdd = '';
+        if (targetType === 'channel_all') mentionToAdd = '@all ';
+        else if (targetType === 'channel_here') mentionToAdd = '@here ';
+        else if (targetType === 'channel_channel') mentionToAdd = '@channel ';
+
+        // 既存テキストの先頭にある @all / @here / @channel を除去して新しいメンションを付与
+        let curVal = textarea.value;
+        curVal = curVal.replace(/^@(all|here|channel)\s*/, '');
+        if (mentionToAdd) {
+            curVal = mentionToAdd + curVal;
+        }
+        textarea.value = curVal;
+
         updateCommand();
     }
 
@@ -477,7 +493,6 @@
         const rawMessage = document.getElementById('remindMessage').value;
         const userName = document.getElementById('userName').value.trim();
         let targetStr;
-        let prefixMention = '';
 
         switch (targetType) {
             case 'me':
@@ -487,26 +502,16 @@
                 targetStr = userName ? '@' + userName : '@ユーザー名';
                 break;
             case 'channel':
-                targetStr = channelName ? '~' + channelName : '~チャンネル名';
-                break;
             case 'channel_all':
-                targetStr = channelName ? '~' + channelName : '~チャンネル名';
-                prefixMention = '@all ';
-                break;
             case 'channel_here':
-                targetStr = channelName ? '~' + channelName : '~チャンネル名';
-                prefixMention = '@here ';
-                break;
             case 'channel_channel':
                 targetStr = channelName ? '~' + channelName : '~チャンネル名';
-                prefixMention = '@channel ';
                 break;
             default:
                 targetStr = 'me';
         }
         
-        const fullMessage = prefixMention + rawMessage;
-        const formattedMessage = `"${fullMessage.replace(/"/g, '\\"')}"`;
+        const formattedMessage = `"${rawMessage.replace(/"/g, '\\"')}"`;
         const command = `/remind ${targetStr} ${formattedMessage} ${timeStr}`;
 
         document.getElementById('output').textContent = command;
