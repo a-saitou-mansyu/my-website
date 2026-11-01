@@ -473,9 +473,11 @@
             const val = document.getElementById('calendarInput').value;
             if (val) {
                 const [datePart, timePart] = val.split('T');
-                timeStr = `at ${timePart} ${datePart}`;
+                const [year, month, day] = datePart.split('-');
+                const formattedTime = formatTime12h(timePart);
+                timeStr = `on ${month}/${day}/${year} at ${formattedTime}`;
             } else {
-                timeStr = 'at 15:45 2026-09-04';
+                timeStr = 'on 09/04/2026 at 3:45pm';
             }
         } else if (currentTab === 'repeat') {
             const cycle = document.getElementById('repeatCycle').value;
